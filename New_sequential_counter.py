@@ -6,12 +6,6 @@ def generate_varibales(numbers):
 def generate_extra_variables(k, n, start):
     return [[i*k + j + 1 + start for j in range(k)] for i in range(n - 2)]
 
-def get_row(variable, start, k):
-    return int((variable - start) / k)
-
-def get_col(variable, start, k):
-    return (variable - start) % k
-
 def new_sequential_counter_ALK(clauses, variables, start, k):
 
     extravariables = generate_extra_variables(k, len(variables), start)
@@ -48,7 +42,8 @@ def new_sequential_counter_ALK(clauses, variables, start, k):
     
     # R(n-1, k) V (X(n) ^ R(n-1)(k-1))
     clauses.append([extravariables[len(variables) - 3][k - 1], variables[len(variables) - 1]])
-    clauses.append([extravariables[len(variables) - 3][k - 1], extravariables[len(variables) - 3][k -2]])
+    if k - 2 >= 0:
+        clauses.append([extravariables[len(variables) - 3][k - 1], extravariables[len(variables) - 3][k - 2]])
 
     return clauses, start
 
