@@ -75,14 +75,18 @@ def new_sequential_counter_AMK(clauses, variables, start, k):
 k = 2
 n = 5
 variables = generate_varibales(n)
+variables = [-1,1,1,1,2,2]
 start = variables[-1]
 clauses = []
-
-clauses, start = new_sequential_counter_ALK(clauses, variables, start, k)
+clauses.append([1])
+#clauses.append([2])
+#clauses.append([3])
+# clauses, start = new_sequential_counter_ALK(clauses, variables, start, k)
 clauses, start = new_sequential_counter_AMK(clauses, variables, start, k)
 
 solver = Glucose3()
 for clause in clauses:
+    print(clause)
     solver.add_clause(clause)
 
 if solver.solve():

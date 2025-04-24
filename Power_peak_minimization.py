@@ -20,6 +20,31 @@ def exactly_one(clauses, variables):
     clauses = at_most_one(clauses, variables)
     return clauses
 
+def new_sequential_counter_AMK(clauses, variables, start, k):
+    extravariables = generate_extra_variables(k, len(variables), start)
+    
+    start = extravariables[-1][-1]
+
+    # X(i) -> R(i,1)
+    for i in range(1, len(variables) - 1):
+        clauses.append([-variables[i], extravariables[i - 1][0]])
+
+    # R(i-1,j) -> R(i,j)
+    for i in range(2, len(variables) - 1):
+        for j in range(min(i - 1, k)):
+            clauses.append([-extravariables[i - 2][j], extravariables[i - 1][j]])
+    
+    # X(i) ^ R(i - 1, j - 1) -> R(i,j)
+    for i in range(2, len(variables) - 1):
+        for j in range(1, min(i, k)):
+            clauses.append([-variables[i], -extravariables[i - 2][j - 1], extravariables[i - 1][j]])
+    
+    # X(i) -> -R(i-1, k)
+    for i in range(k + 1, len(variables)):
+        clauses.append([-variables[i], -extravariables[i - 2][k - 1]])
+    
+    return clauses, start
+
 def list_of_contraints(task, rime_slots, time_slots_posible, workstations):
     clauses = []
     # X[i][j]: task i assigned to workstation j
@@ -65,6 +90,13 @@ def list_of_contraints(task, rime_slots, time_slots_posible, workstations):
                         if (t1 > t2):
                             clauses.append([-assignment_variables[i][k], -assignment_variables[j][k],
                                             -scheduling_varibales[i][t1], -scheduling_varibales[j][t2]])
+    
+    # If task duration is more than half of cycle time, this task is necessarily
+    # active in the middle of the time horizon
+    for i in range(len(tasks)):
+        if (len(time_slots) - len(time_slots_posible[i]) < len(time_slots_posible[i]) - 1):
+            for t in range(len(time_slots) - len(time_slots_posible[i]), len(time_slots_posible[i]) - 1):
+                clauses.append([activity_variables[i][t]])
 
 
 tasks = [1, 2, 3, 4]
