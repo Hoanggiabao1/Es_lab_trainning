@@ -436,14 +436,14 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
     print("initial value:",bestValue)
     print("initial station:",station)
     start = A[-1][-1]
-    list_time_peek = []
+    list_time_peak = []
     for t in range(c):
         for stations in station:
             solver.add_clause([-A[j-1][t] for j in stations])
         list_variables = [-1]
         for j in range(len(W)):
             list_variables += [A[j][t]]*W[j]
-        list_time_peek.append(list_variables)
+        list_time_peak.append(list_variables)
     
     sol = 1
     solbb = 1
@@ -473,7 +473,7 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
         for t in range(c):
             # for stations in station: 
             clauses = []
-            clauses, start = new_sequential_counter_AMK(clauses, list_time_peek[t], start, value - 1)
+            clauses, start = new_sequential_counter_AMK(clauses, list_time_peak[t], start, value - 1)
             for clause in clauses:
                 solver.add_clause(clause)
                 # solver.add_clause([-A[j-1][t] for j in stations])
