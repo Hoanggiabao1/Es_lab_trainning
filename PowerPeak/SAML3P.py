@@ -41,7 +41,6 @@ adj = []
 
 
 
-
 def input():
     cnt = 0
     for line in fileinput.input(filename):
@@ -469,7 +468,6 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
             # print("new value:",bestValue)
             # print("new station:",station)
 
-        start = A[-1][-1]
         for t in range(c):
             # for stations in station: 
             clauses = []
