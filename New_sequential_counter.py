@@ -1,4 +1,5 @@
 from pysat.solvers import Glucose3
+from pysat.card import CardEnc
 
 def generate_varibales(numbers):
     return [-1] + [i for i in range(1, numbers + 1)]
@@ -75,15 +76,19 @@ def new_sequential_counter_AMK(clauses, variables, start, k):
 k = 2
 n = 5
 variables = generate_varibales(n)
-variables = [-1,1,1,1,2,2]
+variables = [1,1,1,2,2]
+variables_ = [1,2,2,3]
 start = variables[-1]
 clauses = []
-clauses.append([1])
+clauses.append([3])
 #clauses.append([2])
 #clauses.append([3])
 # clauses, start = new_sequential_counter_ALK(clauses, variables, start, k)
-clauses, start = new_sequential_counter_AMK(clauses, variables, start, k)
-
+#clauses, start = new_sequential_counter_AMK(clauses, variables, start, k)
+card = CardEnc.atmost(variables, 2, 1)
+clauses += card.clauses
+card_ = CardEnc.atmost(variables_, 2, 1)
+clauses += card_.clauses
 solver = Glucose3()
 for clause in clauses:
     print(clause)
@@ -91,7 +96,7 @@ for clause in clauses:
 
 if solver.solve():
     model = solver.get_model()
-    print(model[:5])
+    print(model[:3])
 else:
     print("can't")
 

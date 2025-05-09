@@ -1,181 +1,168 @@
-MERTENS.IN2 1
-#Var: 126
-#Cons: 738
-#sol: 4
-#solbb: 3
-Time taken: 0.003000020980834961 seconds
+MERTENS.IN2 2
+#Var: 174
+#Cons: 846
+value: 164
+#sol: 3
+#solbb: 2
+Time taken: 0.009691715240478516 seconds
  
 MERTENS.IN2 2
-#Var: 266
-#Cons: 2495
-#sol: 13
-#solbb: 12
-Time taken: 0.007006168365478516 seconds
+#Var: 518
+#Cons: 2855
+value: 54
+#sol: 7
+#solbb: 6
+Time taken: 0.0236356258392334 seconds
  
-BOWMAN.IN2 
-#Var: 360
-#Cons: 2387
-#sol: 15
-#solbb: 7
-Time taken: 0.007005453109741211 seconds
- 
-JAESCHKE.IN2 1
-#Var: 180
-#Cons: 614
-#sol: 2
-#solbb: 1
-Time taken: 0.001998424530029297 seconds
+BOWMAN.IN2 2
+#Var: 720
+#Cons: 3027
+value: 146
+#sol: 4
+#solbb: 3
+Time taken: 0.013120889663696289 seconds
  
 JAESCHKE.IN2 2
-#Var: 351
-#Cons: 3639
-#sol: 25
-#solbb: 24
-Time taken: 0.012995719909667969 seconds
+#Var: 180
+#Cons: 746
+value: 173
+#sol: 2
+#solbb: 1
+Time taken: 0.0 seconds
  
-JACKSON.IN2 1
-#Var: 242
-#Cons: 1688
-#sol: 6
-#solbb: 5
-Time taken: 0.004007577896118164 seconds
+JAESCHKE.IN2 2
+#Var: 837
+#Cons: 4377
+value: 47
+#sol: 10
+#solbb: 9
+Time taken: 0.05193781852722168 seconds
  
 JACKSON.IN2 2
-#Var: 495
-#Cons: 8261
-#sol: 26
-#solbb: 23
-Time taken: 0.04684329032897949 seconds
+#Var: 816
+#Cons: 2703
+value: 166
+#sol: 7
+#solbb: 6
+Time taken: 0.02486705780029297 seconds
  
-MANSOOR.IN2 1
-#Var: 1100
-#Cons: 21752
-#sol: 6
-#solbb: 5
-Time taken: 0.036795616149902344 seconds
+JACKSON.IN2 2
+#Var: 1461
+#Cons: 9983
+value: 57
+#sol: 11
+#solbb: 10
+Time taken: 0.2493419647216797 seconds
  
 MANSOOR.IN2 2
-#Var: 2090
-#Cons: 65276
-#sol: 10
-#solbb: 7
-Time taken: 0.12697672843933105 seconds
-
-MITCHELL.IN2 1
-#Var: 756
-#Cons: 7035
-#sol: 141
-#solbb: 110
-Time taken: 0.0787210464477539 seconds
+#Var: 3980
+#Cons: 27128
+value: 111
+#sol: 5
+#solbb: 4
+Time taken: 0.18070173263549805 seconds
+ 
+MANSOOR.IN2 2
+#Var: 5850
+#Cons: 71856
+value: 71
+#sol: 4
+#solbb: 3
+Time taken: 0.24408364295959473 seconds
  
 MITCHELL.IN2 2
-#Var: 1701
-#Cons: 40950
-#sol: 53
-#solbb: 50
-Time taken: 0.485720157623291 seconds
-
-ROSZIEG.IN2 1
-#Var: 950
-#Cons: 23785
-value: 242
-#sol: 346
-#solbb: 315
-Time taken: 0.31843018531799316 seconds
-
+#Var: 12698
+#Cons: 29855
+value: 225
+#sol: 10
+#solbb: 9
+Time taken: 0.6045198440551758 seconds
+ 
+MITCHELL.IN2 2
+#Var: 10983
+#Cons: 58812
+value: 84
+#sol: 14
+#solbb: 13
+Time taken: 2.2776339054107666 seconds
+ 
 ROSZIEG.IN2 2
-#Var: 1700
-#Cons: 50794
+#Var: 22580
+#Cons: 65463
+value: 242
+#sol: 17
+#solbb: 16
+Time taken: 3.1103546619415283 seconds
+ 
+ROSZIEG.IN2 2
+#Var: 25476
+#Cons: 96234
 value: 118
-#sol: 78
-#solbb: 54
-Time taken: 0.9368183612823486 seconds
+#sol: 10
+#solbb: 9
+Time taken: 5.340144395828247 seconds
+ 
+MERTENS.IN2 2
+#Var: 174
+#Cons: 846
+value: 164
+#sol: 3
+#solbb: 2
+Time taken: 0.005443572998046875 seconds
  
 BUXEY.IN2 2
-#Var: 2929
-#Cons: 160594
+#Var: 86542
+#Cons: 323543
 value: 184
-#sol: 54
-#solbb: 53
-Time taken: 4.687330961227417 seconds
+#sol: 11
+#solbb: 10
+Time taken: 96.31650686264038 seconds
  
-SAWYER.IN2 1
-#Var: 1920
-#Cons: 104935
-value: 358
-#sol: 86
-#solbb: 85
-Time taken: 0.2104487419128418 seconds
+BUXEY.IN2 2
+#Var: 66106
+#Cons: 210894
+value: 315
+#sol: 22
+#solbb: 21
+Time taken: 60.345908880233765 seconds
  
 SAWYER.IN2 2
-#Var: 3030
-#Cons: 186381
-value: 192
-#sol: 94
-#solbb: 83
-Time taken: 7.820242881774902 seconds
+#Var: 70795
+#Cons: 238510
+value: 358
+#sol: 13
+#solbb: 12
+Time taken: 4.693627595901489 seconds
  
-GUNTHER.IN2 1
-#Var: 3290
-#Cons: 258801
+SAWYER.IN2 2
+#Var: 86361
+#Cons: 348907
+value: 192
+#sol: 12
+#solbb: 11
+Time taken: 215.13889932632446 seconds
+ 
+GUNTHER.IN2 2
+#Var: 187503
+#Cons: 825279
+value: 307
+#sol: 37
+#solbb: 36
+Time taken: 173.15767335891724 seconds
+ 
+GUNTHER.IN2 2
+#Var: 199899
+#Cons: 727421
+value: 276
+#sol: 9
+#solbb: 8
+Time taken: 35.30920743942261 seconds
+ 
+GUNTHER.IN2 2
+#Var: 189570
+#Cons: 620881
 value: 406
 #sol: 3
 #solbb: 2
-Time taken: 0.31353259086608887 seconds
- 
-GUNTHER.IN2 1
-#Var: 4095
-#Cons: 348773
-value: 276
-#sol: 110
-#solbb: 94
-Time taken: 0.9933240413665771 seconds
- 
-BUXEY.IN2 1
-#Var: 1856
-#Cons: 86319
-value: 315
-#sol: 16537
-#solbb: 6774
-Time taken: 472.47886538505554 seconds
-
-HESKIA.IN2 1
-#Var: 7952
-#Cons: 1167737
-value: 229
-#sol: 6000
-#solbb: 2655
-Time taken: 2204.496968984604 seconds
- 
-HESKIA.IN2 2
-#Var: 19236
-#Cons: 3942074
-value: 123
-#sol: 4
-#solbb: 3
-Time taken: 117.8253653049469 seconds
- 
-HESKIA.IN2 2
-#Var: 19236
-#Cons: 3942074
-value: 123
-#sol: 4
-#solbb: 3
-Time taken: 116.80712223052979 seconds
- 
-HESKIA.IN2 2
-#Var: 19236
-#Cons: 3942074
-value: 131
-#sol: 3
-#solbb: 1
-Time taken: 53.76490068435669 seconds
- 
-HESKIA.IN2 2
-#Var: 19236
-#Cons: 3942074
-value: 123
-#sol: 4
-#solbb: 3
-Time taken: 2704.270453929901 seconds
+Time taken: 1.8625457286834717 seconds
  

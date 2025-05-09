@@ -8,11 +8,13 @@ from tabulate import tabulate
 import webbrowser
 import sys
 import test
+from pysat.pb import PBEnc
+from pysat.formula import IDPool
 
 # input variables in database ?? mertens 1
-n = 28
-m = 3
-c = 342
+n = 35
+m = 14 
+c = 40 
 val = 0
 cons = 0
 sol = 0
@@ -22,7 +24,7 @@ type = 2
 file = ["MITCHELL.IN2","MERTENS.IN2","BOWMAN.IN2","ROSZIEG.IN2","BUXEY.IN2","HESKIA.IN2","SAWYER.IN2","JAESCHKE.IN2","MANSOOR.IN2",
         "JACKSON.IN2","GUNTHER.IN2"]
 #            9          10              11          12          13          14          15          16          17   
-filename = file[5]
+filename = file[10]
 
 fileName = filename.split(".")
 
@@ -269,31 +271,6 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
     print("12 constraints:", len(clauses))
     return clauses
 
-def new_sequential_counter_AMK(clauses, variables, start, k):
-    extravariables = generate_extra_variables(k, len(variables), start)
-    
-    start = extravariables[-1][-1]
-
-    # X(i) -> R(i,1)
-    for i in range(1, len(variables) - 1):
-        clauses.append([-variables[i], extravariables[i - 1][0]])
-
-    # R(i-1,j) -> R(i,j)
-    for i in range(2, len(variables) - 1):
-        for j in range(min(i - 1, k)):
-            clauses.append([-extravariables[i - 2][j], extravariables[i - 1][j]])
-    
-    # X(i) ^ R(i - 1, j - 1) -> R(i,j)
-    for i in range(2, len(variables) - 1):
-        for j in range(1, min(i, k)):
-            clauses.append([-variables[i], -extravariables[i - 2][j - 1], extravariables[i - 1][j]])
-    
-    # X(i) -> -R(i-1, k)
-    for i in range(k + 1, len(variables)):
-        clauses.append([-variables[i], -extravariables[i - 2][k - 1]])
-    
-    return clauses, start
-
 def solve(solver):
     if solver.solve():
         model = solver.get_model()
@@ -419,7 +396,7 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
 
     # print(ip2[])
     clauses = generate_clauses(n,m,c,time_list,adj,ip1,ip2)
-
+    clauses_num = len(clauses)
     solver = Glucose3()
     for clause in clauses:
         solver.add_clause(clause)
@@ -434,30 +411,30 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
     bestValue, station = result
     print("initial value:",bestValue)
     print("initial station:",station)
-    start = A[-1][-1]
-    list_time_peak = []
+
+    vpool = IDPool(start_from=A[-1][-1] + 1)
+
     for t in range(c):
-        for stations in station:
-            solver.add_clause([-A[j-1][t] for j in stations])
-        list_variables = [-1]
-        for j in range(len(W)):
-            list_variables += [A[j][t]]*W[j]
-        list_time_peak.append(list_variables)
-    
+        # for stations in station: 
+        clauses_ = PBEnc.atmost([A[j][t] for j in range(len(W))], W, bestValue - 1, vpool = vpool)
+        vpool = IDPool(start_from=vpool.top + 1)
+        for clause in clauses_.clauses:
+            solver.add_clause(clause)
+            clauses_num += 1
     sol = 1
     solbb = 1
     while True:
-        # start_time = time.time()
+        # start_time = time.time()     
         sol = sol + 1
         model = solve(solver)
         current_time = time.time()
         if current_time - start_time >= 3600:
             print("time out")
-            return bestSolution, sol, solbb, bestValue
+            return bestSolution, sol, solbb, bestValue, clauses_num
         # print(f"Time taken: {end_time - start_time} seconds")
         if model is None:
             #print(bestSolution)
-            return bestSolution, sol, solbb, bestValue
+            return bestSolution, sol, solbb, bestValue, clauses_num
         value, station = get_value(model, bestValue)
         print("value:",value)
         # print("station:",station)
@@ -467,15 +444,23 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
             bestValue = value
             # print("new value:",bestValue)
             # print("new station:",station)
+        clauses_num = 0
+        solver = Glucose3()
+        for clause in clauses:
+            solver.add_clause(clause)
+            clauses_num += 1 
+
+        vpool = IDPool(start_from=A[-1][-1] + 1)
 
         for t in range(c):
             # for stations in station: 
-            clauses = []
-            clauses, start = new_sequential_counter_AMK(clauses, list_time_peak[t], start, value - 1)
-            for clause in clauses:
+            clauses_ = PBEnc.atmost([A[j][t] for j in range(len(W))], W, value - 1, vpool = vpool)
+            vpool = IDPool(start_from=vpool.top + 1)
+            for clause in clauses_.clauses:
                 solver.add_clause(clause)
-                # solver.add_clause([-A[j-1][t] for j in stations])
-                # print(stations)
+                clauses_num += 1 
+        
+    
 
 X, S, A = generate_variables(n,m,c)
 input()
@@ -484,21 +469,23 @@ val = max(A)
 start_time = time.time()
 sol = 0
 solbb = 0
-solution, sol, solbb, solval = optimal(X,S,A,n,m,c,sol,solbb,start_time) #type: ignore
+clauses_num = 0
+solution, sol, solbb, solval, clauses_num = optimal(X,S,A,n,m,c,sol,solbb,start_time) #type: ignore
 end_time = time.time()
 if(solution is not None):
     print_solution(solution)
     x = [[solution[j*m+i] for i in range(m)] for j in range(n)]
     s = [[solution[m*n + j*c + i] for i in range(c)] for j in range(n)]
     a = [[solution[m*n + c*n + j*c + i] for i in range(c)] for j in range(n)]
+    
 
     with open("output.txt", "a") as output_file: 
         sys.stdout = output_file
         #print(, file=output_file) 
         print(filename,type,file=output_file)
         
-        print("#Var:",val[c-1],file=output_file)
-        print("#Cons:",len(clauses),file=output_file)
+        print("#Var:",len(solution),file=output_file)
+        print("#Cons:",clauses_num,file=output_file)
         print("value:",solval,file=output_file)
         print("#sol:",sol,file=output_file)
         print("#solbb:",solbb,file=output_file)
