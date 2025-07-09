@@ -12,9 +12,9 @@ from pysat.pb import PBEnc
 from pysat.formula import IDPool
 
 # input variables in database ?? mertens 1
-n = 35
-m = 14 
-c = 40 
+n = 7
+m = 6
+c = 6
 val = 0
 cons = 0
 sol = 0
@@ -24,7 +24,7 @@ type = 2
 file = ["MITCHELL.IN2","MERTENS.IN2","BOWMAN.IN2","ROSZIEG.IN2","BUXEY.IN2","HESKIA.IN2","SAWYER.IN2","JAESCHKE.IN2","MANSOOR.IN2",
         "JACKSON.IN2","GUNTHER.IN2"]
 #            9          10              11          12          13          14          15          16          17   
-filename = file[10]
+filename = file[1]
 
 fileName = filename.split(".")
 
@@ -235,7 +235,7 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
     #             continue
     #         clauses.append([ -A[j][t], A[j][t+1] , S[j][max(0,t-time_list[j]+1)]])
     
-    #9
+    9
     for i, j in adj:
         for k in range(m):
             if ip1[i][k] == 1 or ip1[j][k] == 1:
@@ -244,13 +244,13 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
                 #t1>t2
                 for t2 in range(c-time_list[j]+1):
                     if ip2[i][k][t1] == 1 or ip2[j][k][t2] == 1:
-                        continue
+                       continue
                     if t1 > t2:
                         clauses.append([-X[i][k], -X[j][k], -S[i][t1], -S[j][t2]])
     cons = len(clauses)
     print("Constraints:",cons)
 
-    # #10
+    #10
     for j in range(n):
         for k in range(m):
             if ip1[j][k] == 1:

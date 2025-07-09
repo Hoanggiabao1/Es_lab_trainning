@@ -166,3 +166,35 @@ value: 406
 #solbb: 2
 Time taken: 1.8625457286834717 seconds
  
+MERTENS.IN2 2
+#Var: 174
+#Cons: 846
+value: 164
+#sol: 3
+#solbb: 2
+Time taken: 0.007005453109741211 seconds
+ 
+MERTENS.IN2 2
+#Var: 174
+#Cons: 846
+value: 164
+#sol: 3
+#solbb: 2
+Time taken: 0.01565098762512207 seconds
+ 
+MERTENS.IN2 2
+#Var: 126
+#Cons: 740
+value: 164
+#sol: 2
+#solbb: 1
+Time taken: 0.004006147384643555 seconds
+ 
+MERTENS.IN2 2
+#Var: 174
+#Cons: 846
+value: 164
+#sol: 3
+#solbb: 2
+Time taken: 0.002983570098876953 seconds
+ 
