@@ -6,6 +6,8 @@ import math
 import time
 import fileinput
 import csv
+import sys
+import subprocess
 
 n = 7 # Task number
 m = 2 # Workstation number
@@ -65,7 +67,7 @@ def generate_variables(n, m, c, UB):
         for t in Time_unit:
             row.append(i*c + t + 1 + B[-1][-1])
         A.append(row)
-    
+
     # U[j]: peak >= j
     U = []
     for j in range(0, UB):
@@ -78,15 +80,9 @@ def caculate_UB_and_LB(n, m, c, W):
     LB = W_sorted[-1]
     return UB, LB
 
-def list_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
+def list_contrain(n, m, c, precedence_relations, Ex_Time, W, A, B, X):
     wcnf = WCNF()
-    X, B, A, U = generate_variables(n, m, c, UB)
 
-    # Soft constraints: minimize power peak
-    for j in range(UB):
-        # Manually add to soft constraints 
-        wcnf.append([-U[j]], 1)
-    
     # Each task is assigned to exactly one station
     for i in range(n):
         clause = [X[i][s] for s in range(m)]
@@ -138,6 +134,18 @@ def list_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
             for s in range(m):
                 for t in range(c):
                     wcnf.append([-X[i][s], -X[j][s], -A[i][t], -A[j][t]])
+    return wcnf
+
+def list_inaugural_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
+    wcnf = WCNF()
+    X, B, A, U = generate_variables(n, m, c, UB)
+
+    wcnf = list_contrain(n, m, c, precedence_relations, Ex_Time, W, A, B, X)
+
+    # Soft constraints: minimize power peak
+    for j in range(UB):
+        # Manually add to soft constraints 
+        wcnf.append([-U[j]], 1)
 
     # Lower bound enforcement
     for j in range(0, LB):
@@ -174,76 +182,27 @@ def list_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
         # Add the encoded clauses to WCNF
         for clause in pb_clauses.clauses:
             wcnf.append(clause)
-        
-    return wcnf
+    
+    var = pb_clauses.nv
+    return wcnf, var
 
 def list_binary_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
     wcnf = WCNF()
     X, B, A, U = generate_variables(n, m, c, UB)
     n_bits = math.ceil(math.log2(UB + 1))
 
+    wcnf = list_contrain(n, m, c, precedence_relations, Ex_Time, W, A, B, X)
+
     # Binary representation variables binU_j
     binU = []
     for j in range(n_bits):
         binU.append(A[-1][-1] + j + 1)
     
-    # Soft constraints: minimize power peak with binary representation (Constraint 1')
+    # Soft constraints: minimize power peak with binary representation
     for j in range(n_bits):
         weight = 2**j
         # Manually add to soft constraints with proper weight
         wcnf.append([-binU[j]], weight)
-    
-    # Each task is assigned to exactly one station
-    for i in range(n):
-        clause = [X[i][s] for s in range(m)]
-        wcnf.append(clause)
-        for s1 in range(m - 1):
-            for s2 in range(s1 + 1, m):
-                wcnf.append([-X[i][s1], -X[i][s2]])
-    
-    # Precedence relations between stations
-    for (i,j) in precedence_relations:
-        for s1 in range(m):
-            for s2 in range(s1):  # s2 < s1
-                wcnf.append([-X[i - 1][s1], -X[j - 1][s2]])
-
-    # Precedence relations within same station
-    for (i, j) in precedence_relations:
-        for s in range(m):
-            for t1 in range(c):
-                for t2 in range(t1): # t2 < t1   
-                    wcnf.append([-X[i - 1][s], -X[j - 1][s], -B[i - 1][t1], -B[j - 1][t2]])
-    
-    # Each task starts exactly once
-    for i in range(n):
-        clause = [B[i][t] for t in range(c)]
-        wcnf.append(clause)
-        for t1 in range(c - 1):
-            for t2 in range(t1 + 1, c):
-                wcnf.append([-B[i][t1], -B[i][t2]])
-
-    # Tasks must start within feasible time windows
-    feasible_start_times = []
-    for i in range(n):
-        feasible_start_times.append(list(range(c - Ex_Time[i] + 1)))
-    for i in range(n):
-        for t in range(c):
-            if t not in feasible_start_times[i]:
-                wcnf.append([-B[i][t]])
-    
-    # Task activation (B_{i,t} -> A_{i,t+ε} for ε ∈ {0, ..., t_i-1})
-    for i in range(n):
-        for t in feasible_start_times[i]:
-            for epsilon in list(range(Ex_Time[i])):
-                if t + epsilon < c:
-                    wcnf.append([-B[i][t], A[i][t + epsilon]])
-    
-    # Prevent simultaneous execution on same station
-    for i in range(n):
-        for j in range(i + 1, n):
-            for s in range(m):
-                for t in range(c):
-                    wcnf.append([-X[i][s], -X[j][s], -A[i][t], -A[j][t]])
 
     start = binU[-1]
     # Constraint 9': Binary lower bound enforcement
@@ -297,8 +256,8 @@ def list_binary_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
         # Add the encoded clauses to WCNF
         for clause in pb_clauses.clauses:
             wcnf.append(clause)
-
-    return wcnf
+    var = pb_clauses.nv 
+    return wcnf, var
 
 def get_value(n, m, c, model, UB, LB, W):
     ans_map = []
@@ -316,31 +275,45 @@ def get_value(n, m, c, model, UB, LB, W):
         for j in range(c):
             row.append(0)
         ans_map.append(row)
+
+    A = []
+    X = []
+    for i in model[:start_U]:
+        if (i < start_B + 1):
+            X.append(i)
+        elif (i> start_A and i <= start_U):
+            A.append(i - start_A)
+        elif (i > start_U):
+            break
     
     for i in range(m):
         for j in range(c):
-            for l in range(n):
-                if ((model[l*m + i] > 0 and model[start_A + l*c + j] > 0) or 
-                    (model[l*m + i] > 0 and model[start_B + l*c + j] > 0)):
-                    ans_map[i][j] = W[l]
+            for k in range(n):
+                if ((k*m + i + 1) in X) and ((k*c + j + 1) in A):
+                    ans_map[i][j] = W[k]
     
     for i in range(c):
         ans_map[m][i] = sum(ans_map[j][i] for j in range(m))
     peak = max(ans_map[m][i] for i in range(c))
     return ans_map, peak
 
-def write_fancy_table_to_csv(matrix, filename="Output.csv"):
-    with open(filename, "w", newline='') as f:
+def write_fancy_table_to_csv(ins, n, m, c, val, s_cons, h_cons, peak, status, time, type, build_time, filename="Output.csv"):
+    with open(filename, "a", newline='') as f:
         writer = csv.writer(f)
-
-        for i, row in enumerate(matrix):
-            if i == len(matrix) - 1:
-                prefix = "Power peak"
-            else:
-                prefix = "Station " + str(i + 1)
-            # Gộp prefix vào dòng
-            csv_row = [prefix] + row
-            writer.writerow(csv_row)
+        row = []
+        row.append(ins)
+        row.append(str(n))
+        row.append(str(m))
+        row.append(str(c))
+        row.append(str(val))
+        row.append(str(s_cons))
+        row.append(str(h_cons))
+        row.append(str(peak))
+        row.append(status)
+        row.append(str(time))
+        row.append(type)
+        row.append(str(build_time))
+        writer.writerow(row)
 
 def write_fancy_table_to_html(matrix, filename="Output.html", input_file_name="", peak=None):
     with open(filename, "w", encoding="utf-8") as f:
@@ -384,14 +357,166 @@ def write_fancy_table_to_html(matrix, filename="Output.html", input_file_name=""
 
         f.write("</body>\n</html>")
 
+def log_print(message, file):
+    print(message, file=file)
+
+def solve_maxsat_internal(wcnf):
+    from pysat.solvers import Glucose3
+        
+        # First try: solve just the hard constraints
+    cnf = CNF()
+    for clause in wcnf.hard:
+        cnf.append(clause)
+        
+    solver = Glucose3()
+    solver.append_formula(cnf)
+        
+    if solver.solve():
+        solution = solver.get_model()
+        solver.delete()
+        return solution
+    else:
+        solver.delete()
+        return None
+
+def write_wcnf_with_h_prefix(wcnf, filename):
+    with open(filename, 'w') as f:
+        # Calculate statistics
+        total_clauses = len(wcnf.hard) + len(wcnf.soft)
+            
+        # Calculate top weight safely
+        if hasattr(wcnf, 'topw') and wcnf.topw:
+            top_weight = wcnf.topw
+        elif wcnf.soft:
+            try:
+                # Try to get weights from soft constraints
+                weights = []
+                for item in wcnf.soft:
+                    if isinstance(item, tuple) and len(item) == 2:
+                        weights.append(item[1])  # weight is second element
+                    else:
+                        # Fallback: assume weight is 1 if not a proper tuple
+                        weights.append(1)
+                top_weight = max(weights) + 1 if weights else 1
+            except Exception as e:
+                top_weight = 1000  # Safe fallback
+        else:
+            top_weight = 1
+            
+            
+        # Write hard constraints with 'h' prefix
+        for clause in wcnf.hard:
+            f.write("h ")
+            f.write(" ".join(map(str, clause)))
+            f.write(" 0\n")
+            
+        # Write soft constraints with their weights
+        for item in wcnf.soft:
+            try:
+                if isinstance(item, tuple) and len(item) == 2:
+                    clause, weight = item
+                else:
+                    # Fallback: treat as clause with weight 1
+                    clause = item
+                    weight = 1
+                    
+                f.write(f"{weight} ")
+                f.write(" ".join(map(str, clause)))
+                f.write(" 0\n")
+            except Exception as e:
+                print(f"Warning: Error writing soft constraint: {e}")
+                continue
+
+def solve_new(wcnf):
+    wcnf_filename = "problem.wcnf"
+    write_wcnf_with_h_prefix(wcnf, wcnf_filename)
+    # Use external MaxSAT solver (tt-open-wbo-inc)
+    try:
+        result = subprocess.run(['./tt-open-wbo-inc-Glucose4_1_static', wcnf_filename], 
+                                  capture_output=True, text=True, timeout=3600)
+        #print(f"Solver output:\n{result.stdout}")
+        # Parse solver output
+        lines = result.stdout.strip().split('\n')
+        for line in lines:
+            if line.startswith('v '):
+                # Extract variable assignments - could be binary string or space-separated
+                var_string = line[2:].strip()
+                    
+                # Check if it's a binary string (all 0s and 1s)
+                if var_string and all(c in '01' for c in var_string):
+                    # Convert binary string to variable assignments
+                    assignment = []
+                    for i, bit in enumerate(var_string):
+                        if bit == '1':
+                            assignment.append(i + 1)  # Variables are 1-indexed, true
+                    return assignment
+                else:
+                    # Handle space-separated format
+                    try:
+                        assignment = [int(x) for x in var_string.split() if x != '0']
+                        return assignment
+                    except ValueError:
+                        # Fallback: treat as binary string anyway
+                        assignment = []
+                        for i, bit in enumerate(var_string):
+                            if bit == '1':
+                                assignment.append(i + 1)
+                        return assignment
+        return None
+    except subprocess.TimeoutExpired:
+        print("time out")
+        return None
+    
 def solve_MaxSat_SAML3P(n, m, c, Ex_Time, W, precedence_relations, file_name):
     UB, LB = caculate_UB_and_LB(n, m, c, W)
-    #wcnf = list_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W)
-    wcnf = list_binary_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W)
     start_time = time.time()
-    print("Soft cons = ", len(wcnf.soft))
-    print("Hard cons = ", len(wcnf.hard))
+    wcnf, var = list_inaugural_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W)
+    build_time = time.time() - start_time
+    model = solve_new(wcnf)
+    if model is not None:
+        done_time = time.time() - start_time
+        print("Best model found:")
+        ans_map, peak = get_value(n, m, c, model, UB, LB, W)
+        print("Val = ", var)
+        print("Time = ", done_time)
+        print("Power peak: ", peak)
+        write_fancy_table_to_html(ans_map, filename="Output.html", 
+                                      input_file_name=(file_name + " " + str(n) + " " + str(m) + " " + str(c)),
+                                      peak = peak)
+        write_fancy_table_to_csv(file_name, n, m, c, var, 
+                                 len(wcnf.soft), len(wcnf.hard), peak, "optimal",
+                                 done_time, "Normal", build_time)
+    else:
+        print("UNSAT")
+        write_fancy_table_to_csv(file_name, n, m, c, var, 
+                                 len(wcnf.soft), len(wcnf.hard), " ", "time out",
+                                 ">3600", "Normal", build_time)
+    
+    start_time = time.time()
+    wcnf2, var2 = list_binary_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W)
+    model = solve_new(wcnf2)
+    if model is not None:
+        done_time = time.time() - start_time
+        print("Best model found:")
+        ans_map, peak = get_value(n, m, c, model, UB, LB, W)
+        print("Val = ", var2)
+        print("Time = ", done_time)
+        print("Power peak: ", peak)
+        write_fancy_table_to_csv(file_name, n, m, c, var2, 
+                                    len(wcnf2.soft), len(wcnf2.hard), peak, "optimal",
+                                    done_time, "Binary", build_time)
+    else:
+        print("UNSAT")
+        write_fancy_table_to_csv(file_name, n, m, c, var2, 
+                                 len(wcnf2.soft), len(wcnf2.hard), " ", "timeout",
+                                 ">3600", "Binary", build_time)
+    '''start_time = time.time()
+    
     with RC2(wcnf) as rc2:
+        print("="*100)
+        print("Normal encoding")
+        print("Soft cons = ", len(wcnf.soft))
+        print("Hard cons = ", len(wcnf.hard))
         model = rc2.compute()
         if time.time() - start_time > 3600:
             print("Time out")
@@ -406,20 +531,83 @@ def solve_MaxSat_SAML3P(n, m, c, Ex_Time, W, precedence_relations, file_name):
             write_fancy_table_to_html(ans_map, filename="Output.html", 
                                       input_file_name=(file_name + " " + str(n) + " " + str(m) + " " + str(c)),
                                       peak = peak)
+            with open("output.txt", "a", encoding="utf-8") as out:
+                log_print("="*100, out)
+                log_print("= " + file_name + " " + str(n) + " " + str(m) + " " + str(c) + " =", out)
+                log_print("="*100, out)
+                log_print("Normal encoding", out)
+                log_print(f"Soft cons = {len(wcnf.soft)}", out)
+                log_print(f"Hard cons = {len(wcnf.hard)}", out)
+                log_print("Best model found:", out)
+                log_print(f"Val = {len(model)}", out)
+                log_print(f"Time = {done_time}", out)
+                log_print(f"Power peak: {peak}", out)
         else:
             print("UNSAT")
 
-file_name = ["BOWMAN", "BUXEY", "GUNTHER", "HESKIA", "JACKSON", "JAESCHKE", "MANSOOR", "MERTENS", "MITCHELL", "ROSZIEG", "SAWYER"]
+    
+    start_time = time.time()
+    with RC2(wcnf2) as rc2:
+        print("="*100)
+        print("Binary encoding")
+        print("Soft cons = ", len(wcnf2.soft))
+        print("Hard cons = ", len(wcnf2.hard))
+        model = rc2.compute()
+        if time.time() - start_time > 3600:
+            print("Time out")
+        elif model is not None:
+            done_time = time.time() - start_time
+            print("Best model found:")
+            ans_map, peak = get_value(n, m, c, model, UB, LB, W)
+            print("Val = ", len(model))
+            print("Time = ", done_time)
+            print("Power peak: ", peak)
+            with open("output.txt", "a", encoding="utf-8") as out:
+                log_print("="*100, out)
+                log_print("Binary encoding", out)
+                log_print(f"Soft cons = {len(wcnf2.soft)}", out)
+                log_print(f"Hard cons = {len(wcnf2.hard)}", out)
+                log_print("Best model found:", out)
+                log_print(f"Val = {len(model)}", out)
+                log_print(f"Time = {done_time}", out)
+                log_print(f"Power peak: {peak}", out)
+        else:
+            print("UNSAT")'''
 
-while True:
-    print("="*100)
-    for i in range(len(file_name)):
-        print(f"{i+1:>2}. {file_name[i]}")
-    i = int(input("Data: "))
-    if i == 0:
-        break
-    else:
-        m = int(input("Station: "))
-        c = int(input("Cycle: "))
-        n, W, precedence_relations, Ex_Time = input_file(file_name[i-1])
-        solve_MaxSat_SAML3P(n, m, c, Ex_Time, W, precedence_relations, file_name[i-1])
+file_name = [
+    ["MERTENS", 6, 6],      #0
+    ["MERTENS", 2, 18],     #1
+    ["BOWMAN", 5, 20],      #2
+    ["JAESCHKE", 8, 6],     #3
+    ["JAESCHKE", 3, 18],    #4
+    ["JACKSON", 8, 7],      #5
+    ["JACKSON", 3, 21],     #6
+    ["MANSOOR", 4, 48],     #7
+    ["MANSOOR", 2, 94],     #8
+    ["MITCHELL", 8, 14],    #9 
+    ["MITCHELL", 3, 39],    #10
+    ["ROSZIEG", 10, 14],    #11
+    ["ROSZIEG", 4, 32],     #12
+    ["BUXEY", 14, 25],      #13
+    ["BUXEY", 7, 47],       #14
+    ["SAWYER", 14, 25],     #15
+    ["SAWYER", 7, 47],      #16
+    ["GUNTHER", 14, 40],    #17
+    ["GUNTHER", 9, 54],     #18
+    ["GUNTHER", 9, 61],     #19
+    ["ROSZIEG", 6, 25],     #20
+    ["BUXEY", 8, 41],       #21
+    ["BUXEY", 11, 33],      #22
+    ["SAWYER", 8, 41],      #23
+    ["SAWYER", 12, 30],     #24
+    ["HESKIA", 8, 138],     #25
+    ["HESKIA", 3, 342],     #26
+    ["HESKIA", 5, 205]      #27
+    ]
+
+for input_in in file_name:
+    name = input_in[0]
+    m = input_in[1]
+    c = input_in[2]
+    n, W, precedence_relations, Ex_Time = input_file(name)
+    solve_MaxSat_SAML3P(n, m, c, Ex_Time, W, precedence_relations, name)

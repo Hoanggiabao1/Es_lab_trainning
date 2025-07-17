@@ -13,7 +13,7 @@ def new_sequential_counter_ALK(clauses, variables, start, k):
     
     start = extravariables[-1][-1]
     
-    print(extravariables)
+    # print(extravariables)
     # X(i) -> R(i,1)
     for i in range(len(variables) - 1):
         clauses.append([-variables[i], extravariables[i][0]])
