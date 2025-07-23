@@ -273,7 +273,7 @@ def get_value(n, m, c, model, W, UB = 0):
     return ans_map, peak
 
 def write_fancy_table_to_csv(ins, n, m, c, val, s_cons, h_cons, peak, status, time, type, build_time, cal_time, filename="Output.csv"):
-    with open(filename, "a", newline='') as f:
+    with open("Output/" + filename, "a", newline='') as f:
         writer = csv.writer(f)
         row = []
         row.append(ins)
@@ -292,7 +292,7 @@ def write_fancy_table_to_csv(ins, n, m, c, val, s_cons, h_cons, peak, status, ti
         writer.writerow(row)
 
 def write_fancy_table_to_html(matrix, filename="Output.html", input_file_name="", peak=None):
-    with open(filename, "w", encoding="utf-8") as f:
+    with open("Output/" + filename, "w", encoding="utf-8") as f:
         # Viết header HTML
         f.write("<!DOCTYPE html>\n<html>\n<head>\n")
         f.write("<meta charset='utf-8'>\n")

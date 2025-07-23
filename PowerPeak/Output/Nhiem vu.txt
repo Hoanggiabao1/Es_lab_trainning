@@ -1,0 +1,5 @@
+Chay thuc nghiem ban cua Phong
+Bien doi: LB -> UB(Chay sat 1 lan)
+Bieu dien binh thuong
+Bieu dien Binary
+Tai sao UB' = 2^n - 1 ok

@@ -1,1 +1,2 @@
-import fileinput
+
+                weight = 1
