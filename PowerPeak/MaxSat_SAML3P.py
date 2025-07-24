@@ -202,7 +202,7 @@ def list_binary_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W):
     for j in range(n_bits):
         weight = 2**j
         # Manually add to soft constraints with proper weight
-        wcnf.append([-binU[j]], weight)
+        wcnf.soft.append(([-binU[j]], weight))
 
     start = binU[-1]
     # Constraint 9': Binary lower bound enforcement

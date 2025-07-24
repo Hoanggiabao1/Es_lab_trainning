@@ -432,7 +432,7 @@ def solve_MaxSat_SAML3P(n, m, c, Ex_Time, W, precedence_relations, file_name, in
     start_time= time.time()
     UB, LB = caculate_UB_and_LB(n, m, c, W, precedence_relations, Ex_Time, A, B, X)
     cal_UB_LB_time = time.time() - start_time
-    '''start_time = time.time()
+    start_time = time.time()
     wcnf, var = list_inaugural_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W)
     build_time = time.time() - start_time
     model = solve_new(wcnf, var)
@@ -453,8 +453,8 @@ def solve_MaxSat_SAML3P(n, m, c, Ex_Time, W, precedence_relations, file_name, in
         print("UNSAT")
         write_fancy_table_to_csv(file_name, n, m, c, var, 
                                  len(wcnf.soft), len(wcnf.hard), " ", "Unsat",
-                                 done_time, "Normal", build_time, cal_UB_LB_time, filename="Normal.csv")'''
-    print("Binary for ",file_name,n,m,c)
+                                 done_time, "Normal", build_time, cal_UB_LB_time, filename="Normal.csv")
+    
     start_time = time.time()
     wcnf2, var2 = list_binary_constrain(n, m, c, UB, LB, precedence_relations, Ex_Time, W)
     build_time = time.time() - start_time
@@ -520,7 +520,7 @@ with open("Output/Binary.csv", "a", newline='') as f:
         row = ["MaxHS"]
         writer.writerow(row)
 
-for input_in in file_name[19:]:
+for input_in in file_name[:19]:
     name = input_in[0]
     m = input_in[1]
     c = input_in[2]
