@@ -393,7 +393,7 @@ def solve_new(wcnf, var):
                                 wcnf_filename
                                 ], capture_output=True, text=True, timeout=3600)
 
-        # print(f"Solver output:\n{result.stdout}")
+        print(f"Solver output:\n{result.stdout}")
         # Parse solver output
         lines = result.stdout.strip().split('\n')
         for line in lines:
@@ -520,7 +520,7 @@ with open("Output/Binary.csv", "a", newline='') as f:
         row = ["MaxHS"]
         writer.writerow(row)
 
-for input_in in file_name[:19]:
+for input_in in file_name[:1]:
     name = input_in[0]
     m = input_in[1]
     c = input_in[2]

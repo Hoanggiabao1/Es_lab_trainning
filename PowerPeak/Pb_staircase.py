@@ -12,11 +12,17 @@ from tabulate import tabulate
 import webbrowser
 import sys
 from pysat.pb import PBEnc
+import math
+import time
+import fileinput
+import csv
+import sys
+import subprocess
 
 # input variables in database ?? mertens 1
-n = 29 #58
-m = 11 #25
-c = 33 #65
+n = 7 #58
+m = 6 #25
+c = 6 #65
 val = 0
 cons = 0    
 sol = 0
@@ -26,7 +32,7 @@ type = 1
 file = ["MITCHELL.IN2","MERTENS.IN2","BOWMAN.IN2","ROSZIEG.IN2","BUXEY.IN2","HESKIA.IN2","SAWYER.IN2","JAESCHKE.IN2","MANSOOR.IN2",
         "JACKSON.IN2","GUNTHER.IN2", "WARNECKE.IN2"]
 #            9          10              11          12          13          14          15          16          17   
-filename = file[4]
+filename = file[1]
 
 fileName = filename.split(".")
 
@@ -34,7 +40,6 @@ with open('task_power/'+fileName[0]+'.txt', 'r') as file:
     W = [int(line.strip()) for line in file]
 
 neighbors = [[ 0 for i in range(n)] for j in range(n)]
-reversed_neighbors = [[ 0 for i in range(n)] for j in range(n)]
 
 visited = [False for i in range(n)]
 toposort = []
@@ -44,13 +49,16 @@ adj = []
 forward = [0 for i in range(n)]
 # W = [41, 13, 21, 24, 11, 11, 41, 32, 31, 25, 29, 25, 31, 3, 14, 37, 34, 6, 18, 35, 18, 19, 25, 40, 20, 20, 36, 23, 29, 48, 41, 20, 31, 25, 1]
 
-def input():
+
+def input_file(filename):
     cnt = 0
-    for line in fileinput.input('data/'+filename):
+    for line in fileinput.input('data/'+filename +'.IN2'):
         line = line.strip()
         if line:
             if cnt == 0:
                 n = int(line)
+                neighbors = [[ 0 for i in range(n)] for j in range(n)]
+                visited = [False for i in range(n)]
             elif cnt <= n: # type: ignore
                 time_list.append(int(line))
             else:
@@ -58,15 +66,18 @@ def input():
                 if(line[0] != "-1" and line[1] != "-1"):
                     adj.append([int(line[0])-1, int(line[1])-1])
                     neighbors[int(line[0])-1][int(line[1])-1] = 1
-                    reversed_neighbors[int(line[1])-1][int(line[0])-1] = 1
                 else:
                     break
             cnt = cnt + 1
+    fileinput.close()
+    return n, neighbors, visited
 
 
 def generate_variables(n,m,c):
     x = [[j*m+i+1 for i in range (m)] for j in range(n)]
+    
     a = [[m*n + j*c + i + 1 for i in range (c)] for j in range(n)]
+    
     s = []
     cnt = m*n + c*n + 1
     for j in range(n):
@@ -83,6 +94,7 @@ def dfs(v):
         if(neighbors[v][i] == 1 and visited[i] == False):
             dfs(i)
     toposort.append(v)
+
 def preprocess(n,m,c,time_list,adj):
     earliest_start = [[-9999999 for _ in range(m)] for _ in range(n)]
     latest_start = [[99999999 for _ in range(m)] for _ in range(n)]
@@ -139,18 +151,6 @@ def preprocess(n,m,c,time_list,adj):
                                 #     print(j+1, k+1, t, file=output_file) 
                                 ip2[j][k][t] = 1
     
-    # sys.stdout = sys.__stdout__
-
-
-    # for j in range(n):
-    #     for k in range(m):
-    #         for t in range(c):
-                # if(ip1[j][k] == 1):
-                #     continue
-                # if(j == 11 or j == 14):
-                #     print(f"task {j+1} in machine {k+1} time {t+1}: {ip2[j][k][t]}")
-                # if(j == 0 and k == 2):
-                #     print(f"task {j+1} in machine {k+1} time {t+1}: {ip2[j][k][t]}")
     # print(ip2)
     return ip1,ip2
 
@@ -175,8 +175,7 @@ def set_var(var, name, *args):
     return var_map[key]
 
 def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
-    # #test
-    # clauses.append([X[11 - 1][2 - 1]])
+    clauses = []
 
     #staircase constraints
     for j in range(n):
@@ -203,34 +202,6 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
             if ip1[i][k+1] == 1:
                 continue
             clauses.append([-get_var("R", j, k), -X[i][k+1]])
-    # # 1
-    # for j in range (0, n):
-    #     # if(forward[j] == 1):
-    #     #     continue
-    #     constraint = []
-    #     for k in range (0, m):
-    #         if ip1[j][k] == 1:
-    #             continue
-    #         constraint.append(X[j][k])
-    #     clauses.append(constraint)
-    # # 2 
-    # for j in range(0,n):
-    #     # if(forward[j] == 1):
-    #     #     continue
-    #     for k1 in range (0,m-1):
-    #         for k2 in range(k1+1,m):
-    #             if ip1[j][k1] == 1 or ip1[j][k2] == 1:
-    #                 continue
-    #             clauses.append([-X[j][k1], -X[j][k2]])
-
-    # #3
-    # for a,b in adj:
-    #     for k in range (0, m-1):
-    #         for h in range(k+1, m):
-    #             if ip1[b][k] == 1 or ip1[a][h] == 1:
-    #                 continue
-    #             clauses.append([-X[b][k], -X[a][h]])
-
 
     print("first 3 constraints (staircase):", len(clauses))
 
@@ -257,23 +228,6 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
             clauses.append([get_var("T", j, last_t-1), S[j][last_t]])
             clauses.append([-get_var("T", j, last_t-1), -S[j][last_t]])
     
-    # Original constraints #4 and #5 
-    # #4
-    # for j in range(n):
-    #     clauses.append([S[j][t] for t in range (c-time_list[j]+1)])
-
-    # #5
-    # for j in range(n):
-    #     for k in range(c-time_list[j]):
-    #         for h in range(k+1, c-time_list[j]+1):
-    #             clauses.append([-S[j][k], -S[j][h]])
-
-    # #6
-    # for j in range(n):
-    #     for t in range(c-time_list[j]+1,c):
-    #         if t > c- time_list[j]:
-    #             clauses.append([-S[j][t]])
-    
     print("4 5 6 constraints (staircase):", len(clauses))
 
     #7
@@ -297,28 +251,6 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
     
     print("8 constraints:", len(clauses))
 
-    # addtional constraints
-    # a task cant run before its active time
-
-    # for j in range(n):
-    #     for t in range (c-time_list[j]+1):
-    #         for l in range (t):
-    #             if(time_list[j] >= c/2 and l >= c-time_list[j] and l < time_list[j]):
-    #                 continue
-    #             clauses.append([-S[j][t],-A[j][l]])
-
-
-    # addtional constraints option 2
-
-
-    # for j in range(n):
-    #     for t in range (c-1): 
-    #         if(time_list[j] >= c/2 and t+1 >= c-time_list[j] and t+1 < time_list[j]):
-    #             continue
-    #         clauses.append([ -A[j][t], A[j][t+1] , S[j][max(0,t-time_list[j]+1)]])
-    
-    # #9
-
     for i,j in adj:
         for k in range(m):
             if ip1[i][k] == 1 or ip1[j][k] == 1:
@@ -331,17 +263,7 @@ def generate_clauses(n,m,c,time_list,adj,ip1,ip2):
                 clauses.append([-X[i][k], -X[j][k], -get_var("T", j, t), -S[i][t_i]])
             for t in range (max(0,right_bound - time_list[i] + 1), c - time_list[i] + 1):
                 clauses.append([-X[i][k], -X[j][k], -S[i][t], -get_var("T",j,c-time_list[j]-1)])
-    # for i, j in adj:
-    #     for k in range(m):
-    #         if ip1[i][k] == 1 or ip1[j][k] == 1:
-    #             continue
-    #         for t1 in range(c - time_list[i] +1):
-    #             #t1>t2
-    #             for t2 in range(c-time_list[j]+1):
-    #                 if ip2[i][k][t1] == 1 or ip2[j][k][t2] == 1:
-    #                     continue
-    #                 if t1 > t2:
-    #                     clauses.append([-X[i][k], -X[j][k], -S[i][t1], -S[j][t2]])
+
     cons = len(clauses)
     print("Constraints:",cons)
 
@@ -410,81 +332,6 @@ def solve(solver, start_time, timeout=3600):
     
     return result[0]
 
-def print_solution(solution):
-    if solution is None:
-        # print("No solution found.")
-        return None
-    else:
-        x = [[solution[j*m+i] for i in range(m)] for j in range(n)]
-        a = [[solution[m*n + j*c + i] for i in range(c)] for j in range(n)]
-        # s = [[solution[m*n + c*n + j*c + i] for i in range(c)] for j in range(n)]
-        cnt = m*n + c*n 
-        s = []
-        for j in range(n):
-            tmp = []
-            for i in range(c - time_list[j] + 1):
-                tmp.append(solution[cnt])
-                cnt += 1
-            s.append(tmp)
-        table = [[0 for t in range(c)] for k in range(m)]
-        for k in range(m):
-            for t in range(c):
-                for j in range(n):
-                    if x[j][k] > 0 and a[j][t] > 0 and table[k][t] == 0:
-                        for l in range(max(0,t-time_list[j]),t+1):
-                            if l < len(s[j]) and s[j][l] > 0:
-                                table[k][t] = j+1
-
-        # Generate HTML content
-        html_content = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Task Assignment to Machines</title>
-            <style>
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                table, th, td {
-                    border: 1px solid black;
-                }
-                th, td {
-                    padding: 8px;
-                    text-align: center;
-                }
-                th {
-                    background-color: #f2f2f2;
-                }
-            </style>
-        </head>
-        <body>
-            <h2>Task Assignment to Machines</h2>
-            <table>
-                <tr>
-                    <th>Machine</th>
-                    """ + "".join([f"<th>Time {t+1}</th>" for t in range(c)]) + """
-                </tr>
-        """
-
-        for k in range(m):
-            row = f"<tr><td>Machine {k+1}</td>" + "".join([f"<td>{table[k][t]}</td>" if table[k][t] > 0 else "<td></td>" for t in range(c)]) + "</tr>"
-            html_content += row
-
-        html_content += """
-            </table>
-        </body>
-        </html>
-        """
-
-        # Write HTML content to a file
-        file_path = "task_assignment.html"
-        with open(file_path, "w") as file:
-            file.write(html_content)
-
-        # Open the HTML file in the default web browser
-        # webbrowser.open(file_path)
-
 def get_value(solution,best_value):
     if solution is None:
         return 100, []
@@ -537,7 +384,171 @@ def get_value(solution,best_value):
 
         return value, unique_constraints
 
-def optimal(X,S,A,n,m,c,sol,solbb,start_time):
+def generate_binary(n,m,c, X, S, A, W, UB, LB, clauses, var_counter):
+    soft_clauses = []
+    n_bit = int(math.log2(UB)) + 1
+    binU =[]
+    
+    for i in range(n_bit):
+        binU.append(var_counter + 1)
+        var_counter+=1
+        soft_clauses.append([[-var_counter], 2**i])
+    var = var_counter + 1
+    variables = []
+    weight = []
+    for i in range(n_bit):
+        variables.append(binU[i])
+        weight.append(2**i)
+    
+    pb_clauses_lb = PBEnc.geq(lits=variables, weights=weight, bound=LB, top_id=var)
+
+    if pb_clauses_lb.nv > var:
+            var = pb_clauses_lb.nv + 1
+    
+    for clause in pb_clauses_lb.clauses:
+        clauses.append(clause)
+
+    for t in range(c):
+        variables = []
+        weight = []
+        for i in range(n):
+            variables.append(A[i][t])
+            weight.append(W[i])
+        
+        for i in range(n_bit):
+            variables.append(-binU[i])
+            weight.append(2**i)
+
+        upper_bound = sum(2**j for j in range(n_bit))
+        # Create PB constraint: sum(power_terms) - sum(binary_terms) <= 0
+        # This is equivalent to: sum(power_terms) <= sum(binary_terms)
+        pb_clauses = PBEnc.leq(lits=variables, weights=weight, bound=upper_bound,
+                                 top_id=var)
+            
+        # Update variable counter
+        if pb_clauses.nv > var:
+            var = pb_clauses.nv + 1
+            
+        # Add the encoded clauses to WCNF
+        for clause in pb_clauses.clauses:
+            clauses.append(clause)
+
+    return clauses, soft_clauses, var
+
+def generate_inagural(n,m,c, X, S, A, W, UB, LB, clauses, var_counter):
+    soft_clauses = []
+    U = []
+    for i in range(LB + 1, UB):
+        U.append(var_counter + 1)
+        var_counter += 1
+        soft_clauses.append([[-var_counter], 1])
+    
+    for i in range(1, len(U)):
+        clauses.append([-U[i], U[i-1]])
+    
+    var = var_counter + 1
+    for t in range(c):
+        variables = []
+        weight = []
+        for i in range(len(U)):
+            variables.append(-U[i])
+            weight.append(1)
+        for i in range(n):
+            variables.append(A[i][t])
+            weight.append(W[i])
+        pb_clauses = PBEnc.leq( lits=variables, weights=weight, 
+                                bound=UB, 
+                                top_id=var)
+        # Update variable counter for any new variables created by PBEnc
+        if pb_clauses.nv > var:
+            var = pb_clauses.nv + 1
+            
+        # Add the encoded clauses to WCNF
+        for clause in pb_clauses.clauses:
+            clauses.append(clause)
+
+    return clauses, soft_clauses, var
+
+def write_wcnf_with_h_prefix(clauses, soft_clauses, var, filename = "problem.wcnf"):
+    with open(filename, 'w') as f:
+        # Calculate statistics
+        total_clauses = len(clauses) + len(soft_clauses)
+        top_weight = max(soft_clauses[i][1] for i in range(len(soft_clauses))) + 1
+            
+        f.write(f"p wcnf {var} {total_clauses} {top_weight}\n")    
+        # Write hard constraints with 'h' prefix
+        for clause in clauses:
+            f.write(str(top_weight) + " ")
+            f.write(" ".join(map(str, clause)))
+            f.write(" 0\n")
+            
+        # Write soft constraints with their weights
+        for item in soft_clauses:
+            clause = item[0][0]
+            weight = item[1]        
+            f.write(f"{weight} ")
+            f.write(" " + str(clause))
+            f.write(" 0\n")
+def solve_maxsat():
+    try:
+        result = subprocess.run([
+                                'wsl', './MaxHS/build/release/bin/maxhs',
+                                '-printSoln',
+                                'problem.wcnf'
+                                ], capture_output=True, text=True, timeout=3600)
+
+        # print(f"Solver output:\n{result.stdout}")
+        # Parse solver output
+        lines = result.stdout.strip().split('\n')
+        for line in lines:
+            if line.startswith('v '):
+                # Extract variable assignments - could be binary string or space-separated
+                var_string = line[2:].strip()
+                    
+                # Check if it's a binary string (all 0s and 1s)
+                if var_string and all(c in '01' for c in var_string):
+                    # Convert binary string to variable assignments
+                    assignment = []
+                    for i, bit in enumerate(var_string):
+                        if bit == '1':
+                            assignment.append(i + 1)  # Variables are 1-indexed, true
+                        else:
+                            assignment.append(-(i + 1))
+                    return assignment
+                else:
+                    # Handle space-separated format
+                    try:
+                        assignment = [int(x) for x in var_string.split() if x != '0']
+                        return assignment
+                    except ValueError:
+                        # Fallback: treat as binary string anyway
+                        assignment = []
+                        for i, bit in enumerate(var_string):
+                            if bit == '1':
+                                assignment.append(i + 1)
+                        return assignment
+        return None
+    except subprocess.TimeoutExpired: 
+        return None
+
+def get_value2(n, m, c, model, W, UB = 0):
+    ans_map = [[0 for _ in range(c)] for _ in range(m + 1)]
+    start_B = n*m
+    start_A = start_B + n*c
+    start_U = start_A + n*c
+    
+    for i in range(m):
+        for j in range(c):
+            for k in range(n):
+                if ((model[k*m  + i] > 0) and model[start_B + k*c + j] > 0):
+                    ans_map[i][j] = W[k]
+    
+    for i in range(c):
+        ans_map[m][i] = sum(ans_map[j][i] for j in range(m))
+    peak = max(ans_map[m][i] for i in range(c))
+    return ans_map, peak
+
+def optimal(X,S,A,n,m,c,start_time):
     global var_counter, var_map
     ip1,ip2 = preprocess(n,m,c,time_list,adj)
 
@@ -622,41 +633,74 @@ def optimal(X,S,A,n,m,c,sol,solbb,start_time):
                 solver.add_clause(clause)
                 # print(stations)
 
+def write_fancy_table_to_csv(ins, n, m, c, sol, solbb, bestValue, end_time, filename="Output.csv"):
+    with open("Output/" + filename, "a", newline='') as f:
+        writer = csv.writer(f)
+        row = []
+        row.append(ins)
+        row.append(str(n))
+        row.append(str(m))
+        row.append(str(c))
+        row.append(str(sol))
+        row.append(str(solbb))
+        row.append(str(bestValue))
+        row.append(str(end_time))
+        writer.writerow(row)
 
+file_name = [
+    ["MERTENS", 6, 6],      #0
+    ["MERTENS", 2, 18],     #1
+    ["BOWMAN", 5, 20],      #2
+    ["JAESCHKE", 8, 6],     #3
+    ["JAESCHKE", 3, 18],    #4
+    ["JACKSON", 8, 7],      #5
+    ["JACKSON", 3, 21],     #6
+    ["MANSOOR", 4, 48],     #7
+    ["MANSOOR", 2, 94],     #8
+    ["MITCHELL", 8, 14],    #9
+    ["MITCHELL", 3, 39],    #10
+    ["ROSZIEG", 10, 14],    #11
+    ["ROSZIEG", 4, 32],     #12
+    ["BUXEY", 14, 25],      #13
+    ["BUXEY", 7, 47],       #14
+    ["SAWYER", 14, 25],     #15
+    ["SAWYER", 7, 47],      #16
+    ["GUNTHER", 14, 40],    #17
+    ["GUNTHER", 9, 54],     #18
+    ["BUXEY", 8, 41],       #19
+    ["ROSZIEG", 6, 25],     #20
+    ["SAWYER", 8, 41],      #21
+    ["HESKIA", 3, 342],     #22
+    ["HESKIA", 5, 205],     #23
+    ["HESKIA", 8, 138],     #14
+    ["BUXEY", 11, 33],      #25
+    ["SAWYER", 12, 30],     #26
+    ["GUNTHER", 9, 61],     #27
+    ["WARNECKER", 25, 65]   #28
+    ]
 
-input()
-X, A, S = generate_variables(n,m,c)
-val = max(S)
+for i in file_name:
+    with open('task_power/'+i[0]+'.txt', 'r') as file:
+        W = [int(line.strip()) for line in file]
+    toposort = []
+    clauses = []
+    time_list = []
+    adj = []
+    n, neighbors, visited = input_file(i[0])
+    m = i[1]
+    c = i[2]
+    var_counter = 0
+    print("n = ",n)
+    X, A, S = generate_variables(n,m,c)
+    val = max(S)
 
-# print(val)
-var_counter = max(val)
-var_map = {}
+    # print(val)
+    var_counter = max(val)
+    var_map = {}
 
-sol = 0
-solbb = 0
-start_time = time.time()
-solution, sol, solbb, solval = optimal(X,S,A,n,m,c,sol,solbb,start_time) #type: ignore
-
-end_time = time.time()
-
-with open("output.txt", "a") as output_file: 
-    sys.stdout = output_file
-    # print(, file=output_file) 
-    print(filename,type,file=output_file)
+    start_time = time.time()
+    bestSolution, sol, solbb, bestValue = optimal(X,S,A,n,m,c,start_time) #type: ignore
+    end_time = time.time()
+    write_fancy_table_to_csv(i[0], n, m, c, sol, solbb, bestValue, end_time - start_time)
     
-    print("#Var:",var_counter,file=output_file)
-    print("#Cons:",len(clauses),file=output_file)
-    print("value:",solval,file=output_file)
-    print("#sol:",sol,file=output_file)
-    print("#solbb:",solbb,file=output_file)
-    print(f"Time taken: {end_time - start_time} seconds",file=output_file)
-    print(" ",file=output_file)
 
-
-
-
-# print(clauses)
-# tmp = 0
-# for i in time_list: 
-#     tmp = tmp + i
-# print(tmp)

@@ -625,7 +625,7 @@ file_name = [
     ["HESKIA", 5, 205]      #27
     ]
 
-for i in file_name[22:]:
+for i in file_name:
     with open('task_power/'+i[0]+'.txt', 'r') as file:
         W = [int(line.strip()) for line in file]
     toposort = []

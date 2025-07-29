@@ -17,11 +17,12 @@ def write_wcnf_with_h_prefix(wcnf, filename):
 # Hàm gọi solver MaxHS
 def call_maxhs_solver(wcnf_file):
     try:
-        result = subprocess.run([
-    'wsl', './MaxHS/build/release/bin/maxhs', '-printSoln',
-    wcnf_file
-], capture_output=True, text=True, timeout=3600)
-
+        result = subprocess.run( 
+            ["wsl","./EvalMaxSAT/build/main/EvalMaxSAT_bin", "test_file.wcnf"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True, timeout=3600)
+        print("REs =", result)
         # Phân tích kết quả
         for line in result.stdout.splitlines():
             line = line.strip()
