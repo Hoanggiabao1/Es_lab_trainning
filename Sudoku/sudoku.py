@@ -47,9 +47,9 @@ def generate_clauses(r, c, s):
                 subgrid_vars = [variables[((i + di)*r + (j + dj))*c + k] for di in range(3) for dj in range(3)]
                 clauses = exactly_one(clauses, subgrid_vars)
     
-    exactly = {(0,4,2), (0,7,6), (0,8,4), (1, 0, 8), (1, 2, 9), (3, 0, 3), 
-               (3, 3, 9), (3, 5, 7), (4, 1, 6), (4, 8, 2), (5,3,8),
-               (5,6,5), (6,6,9), (6,7,7), (7,1,4), (7, 4, 1), (8, 3, 5)}
+    exactly = {(0,0,5), (0,3,7), (0,6,3), (1,1,4), (1,7,9), (2,3,2), 
+               (3,0,6), (3,2,3), (4,4,9), (4,7,8), (5,0,7),
+               (6,1,9), (6,3,3), (6,4,8), (7,0,2), (7,6,7), (7,8,6)}
     for (i, j, k) in exactly:
         clauses.append([variables[(i*r + j)*c + k - 1]])
     return clauses

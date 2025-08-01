@@ -4,5 +4,6 @@ Bieu dien binh thuong
 Bieu dien Binary
 Tai sao UB' = 2^n - 1 ok
 Chạy SAT nhiều lần, thử các bộ giải mạnh
-Chạy EvalMaxSat
+Chạy EvalMaxSat + Wcl
 Incremental sat đã chụp
+Incremental Cadical
