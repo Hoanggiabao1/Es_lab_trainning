@@ -492,7 +492,7 @@ def write_wcnf_with_h_prefix(clauses, soft_clauses, var, filename = "problem.wcn
 def solve_maxsat():
     try:
         result = subprocess.run(
-                                ["wsl","./EvalMaxSAT/build/main/EvalMaxSAT_bin", "problem.wcnf"],
+                                ["wsl","./EvalMaxSAT_bin", "problem.wcnf"],
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 text=True, timeout=3600

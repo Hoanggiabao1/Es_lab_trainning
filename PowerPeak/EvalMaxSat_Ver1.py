@@ -388,7 +388,7 @@ def solve_new(wcnf, var):
     # Use external MaxSAT solver (tt-open-wbo-inc)
     try:
         result = subprocess.run(
-                                ["wsl","./EvalMaxSAT/build/main/EvalMaxSAT_bin", "problem.wcnf"],
+                                ["wsl","./EvalMaxSAT_bin", "problem.wcnf"],
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 text=True, timeout=3600
@@ -522,7 +522,7 @@ with open("Output/Binary.csv", "a", newline='') as f:
         row = ["Eval"]
         writer.writerow(row)
 
-for input_in in file_name[17:]:
+for input_in in file_name[:1]:
     name = input_in[0]
     m = input_in[1]
     c = input_in[2]

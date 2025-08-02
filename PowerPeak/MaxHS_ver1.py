@@ -388,12 +388,12 @@ def solve_new(wcnf, var):
     # Use external MaxSAT solver (tt-open-wbo-inc)
     try:
         result = subprocess.run([
-                                'wsl', './MaxHS/build/release/bin/maxhs',
+                                'wsl', './maxhs',
                                 '-printSoln',
                                 wcnf_filename
                                 ], capture_output=True, text=True, timeout=3600)
 
-        print(f"Solver output:\n{result.stdout}")
+        # print(f"Solver output:\n{result.stdout}")
         # Parse solver output
         lines = result.stdout.strip().split('\n')
         for line in lines:
