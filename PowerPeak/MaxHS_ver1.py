@@ -502,12 +502,16 @@ file_name = [
     ["HESKIA", 8, 138],     #19
     ["BUXEY", 8, 41],       #20
     ["ROSZIEG", 6, 25],     #21
-    ["BUXEY", 11, 33],      #22
-    ["SAWYER", 12, 30],     #23
-    ["SAWYER", 8, 41],      #24
-    ["GUNTHER", 9, 61],     #25
-    ["HESKIA", 3, 342],     #26
-    ["HESKIA", 5, 205]      #27
+    ["SAWYER", 8, 41],      #22
+    ["HESKIA", 3, 342],     #23
+    ["HESKIA", 5, 205],     #24
+    ["BUXEY", 11, 33],      #25
+    ["SAWYER", 12, 30],     #26
+    ["GUNTHER", 9, 61],     #27
+    ["WARNECKER", 25, 65],   #28
+    ["SAWYER2", 12, 30],     #29
+    ["GUNTHER2", 9, 61],     #30
+    ["WARNECKER2", 25, 65]   #31
     ]
 
 with open("Output/Normal.csv", "a", newline='') as f:
@@ -520,7 +524,7 @@ with open("Output/Binary.csv", "a", newline='') as f:
         row = ["MaxHS"]
         writer.writerow(row)
 
-for input_in in file_name[:1]:
+for input_in in file_name[29:]:
     name = input_in[0]
     m = input_in[1]
     c = input_in[2]

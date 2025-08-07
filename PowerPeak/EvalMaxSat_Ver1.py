@@ -509,7 +509,10 @@ file_name = [
     ["BUXEY", 11, 33],      #25
     ["SAWYER", 12, 30],     #26
     ["GUNTHER", 9, 61],     #27
-    ["WARNECKER", 25, 65]   #28
+    ["WARNECKER", 25, 65],   #28
+    ["SAWYER2", 12, 30],     #29
+    ["GUNTHER2", 9, 61],     #30
+    ["WARNECKER2", 25, 65]   #31
     ]
 
 with open("Output/Normal.csv", "a", newline='') as f:
@@ -522,7 +525,7 @@ with open("Output/Binary.csv", "a", newline='') as f:
         row = ["Eval"]
         writer.writerow(row)
 
-for input_in in file_name[:1]:
+for input_in in file_name[29:]:
     name = input_in[0]
     m = input_in[1]
     c = input_in[2]
